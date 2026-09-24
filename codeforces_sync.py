@@ -15,6 +15,7 @@ if not API_KEY or not API_SECRET:
     print("ERROR: Codeforces API credentials are not set.")
     exit(1)
 
+
 def call_codeforces(method, params):
 
     rand = str(random.randint(100000, 999999))
@@ -93,7 +94,7 @@ accepted = [
 print(f"Accepted submissions: {len(accepted)}")
 
 
-# Process oldest first
+# Process oldest submissions first
 for submission in reversed(accepted):
 
     contest_id = submission.get("contestId")
@@ -111,6 +112,7 @@ for submission in reversed(accepted):
     source_base64 = submission.get("sourceBase64")
 
 
+    # Skip if source code is unavailable
     if not source_base64:
 
         print(
@@ -121,12 +123,23 @@ for submission in reversed(accepted):
         continue
 
 
-    # Only process Java for now
+    # Only process Java submissions
     if "Java" not in language:
 
         print(
             f"Skipping {contest_id}{index}: "
             f"language = {language}"
+        )
+
+        continue
+
+
+    # Skip problems without a rating
+    if rating is None:
+
+        print(
+            f"Skipping {contest_id}{index}: "
+            "problem has no rating"
         )
 
         continue
@@ -148,22 +161,14 @@ for submission in reversed(accepted):
         continue
 
 
-    # If rating is unavailable
-    if rating is None:
-
-        rating_folder = "Unrated"
-
-    else:
-
-        # Example:
-        # 800  -> 0800
-        # 900  -> 0900
-        # 1000 -> 1000
-
-        rating_folder = f"{int(rating):04d}"
-
-
     # Create rating folder
+    #
+    # 800  -> 0800
+    # 900  -> 0900
+    # 1000 -> 1000
+    #
+    rating_folder = f"{int(rating):04d}"
+
     os.makedirs(
         rating_folder,
         exist_ok=True
@@ -174,10 +179,10 @@ for submission in reversed(accepted):
     clean_name = clean_filename(name)
 
 
-    # Friend-style filename
+    # Create filename
     #
     # Example:
-    # 71A - Way Too Long Words.java
+    # 282A - Bit++.java
     #
     filename = (
         f"{contest_id}{index} - "
